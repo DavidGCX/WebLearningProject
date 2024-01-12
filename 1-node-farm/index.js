@@ -1,6 +1,11 @@
 const fs = require('fs');
 const http = require('http');
 const url = require('url');
+
+const slugify = require('slugify');
+
+const replaceTemplate = require('./modules/replaceTemplate');
+
 // const textIn = fs.readFileSync('./txt/input.txt', 'utf-8');
 // console.log(textIn);
 
@@ -21,17 +26,45 @@ const url = require('url');
 //     });
 // });
 // console.log('will read file');\
+
+
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const dataObj = JSON.parse(data);
+const tempOverview = fs.readFileSync(`${__dirname}/templates/template-overview.html`, 'utf-8');
+const tempProduct = fs.readFileSync(`${__dirname}/templates/template-product.html`, 'utf-8');
+const tempCard = fs.readFileSync(`${__dirname}/templates/template-card.html`, 'utf-8');
+const slugs = dataObj.map(el => slugify(el.productName, {lower: true}));
 const server = http.createServer((req, res) => {
-    const pathName = req.url;
-    if (pathName === '/' || pathName === '/overview') {
-        res.end('this is the overview');
-    } else if (pathName === '/product') {
-        res.end('this is the product');
-    } else if (pathName === '/api') {
+
+    const {query, pathname} = url.parse(req.url, true);
+    // Overview
+    if (pathname === '/' || pathname === '/overview') {
+        res.writeHead(200, {'Content-type': 'text/html'});
+        const cardsHtml = dataObj.map(el => replaceTemplate(tempCard, el)).join('');
+        let output = tempOverview.replace(/{%PRODUCT_CARDS%}/g,  cardsHtml);
+        res.end(output);
+
+    // Product
+    } else if (pathname === '/product') {
+        try {
+            const product = dataObj[query.id];
+            const output = replaceTemplate(tempProduct, product);
+            res.writeHead(200, {'Content-type': 'text/html'});
+            res.end(output);
+        } catch (error) {
+            res.writeHead(404, {
+                'Content-type': 'text/html',
+                'my-own-header': 'hello-world'
+            });
+            res.end('<h1>page not found</h1>'); 
+        }
+
+    // API
+    } else if (pathname === '/api') {
         res.writeHead(200, {'Content-type': 'application/json'});
         res.end(data);
+
+    // Not Found 
     } else {
         res.writeHead(404, {
             'Content-type': 'text/html',
