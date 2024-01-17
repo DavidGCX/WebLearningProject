@@ -1,23 +1,14 @@
-const fs = require('fs');
 const Tour = require('./../models/tourModel');
 
 exports.getTours = (req, res) => {
 	res.status(200).json({
 		status: 'success',
-		// results: tours.length,
-		// data: {
-		//   tours: tours,
-		// },
 	});
 };
 
 exports.getTour = (req, res) => {
-	//   targetTour = tours.find((tour) => tour.id === req.params.id * 1);
 	res.status(200).json({
 		status: 'success',
-		// data: {
-		//   tours: targetTour,
-		// },
 	});
 };
 
