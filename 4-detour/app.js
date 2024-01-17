@@ -1,9 +1,16 @@
 const express = require('express');
+
 const app = express();
 const morgan = require('morgan');
-const fs = require('fs');
 // 1) MIDDLEWARES
-app.use(morgan('dev'));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
+app.use((req, res, next) => {
+  req.requestTime = new Date().toISOString();
+  console.log(req.requestTime);
+  next();
+});
 app.use(express.json());
 // Serve static files
 //app.use(express.static(`${__dirname}/public`));
