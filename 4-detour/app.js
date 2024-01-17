@@ -5,7 +5,8 @@ const fs = require('fs');
 // 1) MIDDLEWARES
 app.use(morgan('dev'));
 app.use(express.json());
-
+// Serve static files
+//app.use(express.static(`${__dirname}/public`));
 // 2) ROUTES
 const usersRouter = require('./routes/userRoutes');
 const toursRouter = require('./routes/tourRoutes');
