@@ -1,7 +1,5 @@
-const fs = require('fs');
-const Tour = require('./../models/tourModel');
-const { url } = require('inspector');
-const APIFeatures = require('./../utils/apiFeatures');
+const Tour = require('../models/tourModel');
+const APIFeatures = require('../utils/apiFeatures');
 // const tours = JSON.parse(
 //   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`),
 // );

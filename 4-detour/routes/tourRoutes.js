@@ -1,4 +1,5 @@
 const express = require('express');
+
 const toursRouter = express.Router();
 const tourController = require('../controllers/tourController');
 // Check ID exist
@@ -19,4 +20,3 @@ toursRouter
 	.delete(tourController.deleteTour);
 
 module.exports = toursRouter;
-const a = 1;
