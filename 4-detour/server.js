@@ -11,7 +11,6 @@ const DATABASE = process.env.DATABASE.replace(
 	.replace('<USERNAME>', process.env.DATABASE_USERNAME)
 	.replace('<COLLECTION>', process.env.DATABASE_COLLECTION);
 
-console.log(DATABASE);
 mongoose.connect(DATABASE).then(() => {
 	console.log('DB connection successful!');
 });
