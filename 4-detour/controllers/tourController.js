@@ -1,6 +1,7 @@
 const fs = require('fs');
 const Tour = require('./../models/tourModel');
 const { url } = require('inspector');
+const APIFeatures = require('./../utils/apiFeatures');
 // const tours = JSON.parse(
 //   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`),
 // );
@@ -26,16 +27,14 @@ const { url } = require('inspector');
 //   }
 //   next();
 // };
-
 exports.getAllTours = async (req, res) => {
-	// Create a new object from req.query
-
 	try {
-		const queryObj = { ...req.query };
-		const excludedFields = ['page', 'sort', 'limit', 'fields'];
-		excludedFields.forEach((el) => delete queryObj[el]);
-		const query = Tour.find(queryObj);
-		const tours = await query;
+		const features = new APIFeatures(Tour.find(), req.query)
+			.filter()
+			.sort()
+			.limitFields()
+			.paginate();
+		const tours = await features.query;
 		res.status(200).json({
 			status: 'success',
 			results: tours.length,
@@ -46,7 +45,7 @@ exports.getAllTours = async (req, res) => {
 	} catch (err) {
 		res.status(404).json({
 			status: 'fail',
-			message: err,
+			message: err.message,
 		});
 	}
 };
@@ -67,6 +66,12 @@ exports.getTour = async (req, res) => {
 			message: err,
 		});
 	}
+};
+exports.aliasTopTours = (req, res, next) => {
+	req.query.limit = '5';
+	req.query.sort = '-ratingsAverage,price';
+	req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+	next();
 };
 
 exports.createTour = async (req, res) => {
