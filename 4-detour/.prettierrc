@@ -1,6 +1,5 @@
 {
 	"singleQuote": true,
 	"endOfLine": "auto",
-	"useTabs": true,
-	"linewidth": 80
+	"useTabs": true
 }
