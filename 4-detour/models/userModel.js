@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const slugify = require('slugify');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 // create user schema
 
 const userSchema = new mongoose.Schema({
@@ -40,8 +41,17 @@ const userSchema = new mongoose.Schema({
 		},
 	},
 	passwordChangedAt: Date,
-	
+	passwordResetToken: String,
+	passwordResetExpires: Date,
 });
+
+
+userSchema.pre('save', function (next) {
+	if (!this.isModified('password') || this.isNew) return next();
+	this.passwordChangedAt = Date.now() - 1000;
+	next();
+});
+
 
 // encoding passwords
 userSchema.pre('save', async function (next) {
@@ -70,5 +80,16 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 	// False means NOT changed
 	return false;
 };
+
+userSchema.methods.createPasswordResetToken = function () {
+	const resetToken = crypto.randomBytes(32).toString('hex');
+	this.passwordResetToken = crypto
+		.createHash('sha256')
+		.update(resetToken)
+		.digest('hex');
+	console.log({ resetToken }, this.passwordResetToken);
+	this.passwordResetExpires = Date.now() + process.env.PASSWORD_RESET_EXPIRES_IN_MINUTE * 60 * 1000;
+	return resetToken;
+}
 
 module.exports = mongoose.model('User', userSchema);
