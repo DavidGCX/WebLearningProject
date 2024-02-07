@@ -9,7 +9,7 @@ const signToken = (id) => {
 	return jwt.sign({ id }, process.env.JWT_SECRET, {
 		expiresIn: process.env.JWT_EXPIRES_IN,
 	});
-}
+};
 
 const createSendToken = (user, statusCode, res) => {
 	const token = signToken(user._id);
@@ -20,8 +20,7 @@ const createSendToken = (user, statusCode, res) => {
 			user,
 		},
 	});
-}
-
+};
 
 exports.signup = catchAsync(async (req, res, next) => {
 	// This is a dangerous way to create a user
@@ -45,23 +44,48 @@ exports.login = catchAsync(async (req, res, next) => {
 		return next(new AppError('Please provide email and password!', 400));
 	}
 
-	const user = await User.findOne({ email }).select('+password');
-	if (!user || !(await user.correctPassword(password))) {
+	const user = await User.findOne({ email })
+		.select('+password')
+		.select('+IntervalRecordLogin');
+	if (!user) {
+		return next(new AppError('Email Not Exist', 401));
+	}
+
+	if (!(await user.correctPassword(password))) {
+		user.recordLogin(req.ip, false);
+		if (!user.loginAttempt()) {
+			user.save({ validateBeforeSave: false });
+			return next(
+				new AppError(
+					'You have reached the maximum number of login attempts or login too frequent. Please try again later!',
+					429,
+				),
+			);
+		}
+		user.save({ validateBeforeSave: false });
 		return next(new AppError('Incorrect email or password', 401));
 	}
+	user.recordLogin(req.ip, true);
+	if (!user.loginAttempt()) {
+		user.save({ validateBeforeSave: false });
+		return next(
+			new AppError('You login too frequent. Please try again later!', 429),
+		);
+	}
+	user.save({ validateBeforeSave: false });
 	createSendToken(user, 200, res);
 });
 
 exports.forgetPassword = catchAsync(async (req, res, next) => {
-	const user = await User.findOne({ email: req.body.email }).select('+password');
-	// for passing validation
-	user.passwordConfirm = user.password;
+	const user = await User.findOne({ email: req.body.email }).select(
+		'+password',
+	);
 	if (!user) {
 		return next(new AppError('There is no user with email address', 404));
 	}
 	const resetToken = user.createPasswordResetToken();
 	// another way to pass validation is user.save({validateBeforeSave: false});
-	user.save({validateBeforeSave: false});
+	user.save({ validateBeforeSave: false });
 
 	const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
 	const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
@@ -82,13 +106,21 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 		user.passwordResetToken = undefined;
 		user.passwordResetExpires = undefined;
 		await user.save({ validateBeforeSave: false });
-		return next(new AppError('There was an error sending the email. Try again later!', 500));
+		return next(
+			new AppError(
+				'There was an error sending the email. Try again later!',
+				500,
+			),
+		);
 	}
 });
 
-exports.resetPassword = catchAsync( async (req, res, next) => {
+exports.resetPassword = catchAsync(async (req, res, next) => {
 	const resetToken = req.params.resetToken;
-	const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+	const hashedToken = crypto
+		.createHash('sha256')
+		.update(resetToken)
+		.digest('hex');
 	const user = await User.findOne({
 		passwordResetToken: hashedToken,
 		passwordResetExpires: { $gt: Date.now() },
@@ -104,7 +136,6 @@ exports.resetPassword = catchAsync( async (req, res, next) => {
 	createSendToken(user, 200, res);
 });
 
-
 exports.updatePassword = catchAsync(async (req, res, next) => {
 	const user = await User.findById(req.user.id).select('+password');
 	if (!(await user.correctPassword(JSON.stringify(req.body.passwordCurrent)))) {
@@ -116,19 +147,30 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 	createSendToken(user, 200, res);
 });
 
-
 exports.protect = catchAsync(async (req, res, next) => {
-	if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer')) {
-		return next(new AppError('You are not logged in! Please log in to get access', 401));
+	if (
+		!req.headers.authorization ||
+		!req.headers.authorization.startsWith('Bearer')
+	) {
+		return next(
+			new AppError('You are not logged in! Please log in to get access', 401),
+		);
 	}
 	const token = req.headers.authorization.split(' ')[1];
 	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 	const currentUser = await User.findById(decoded.id);
 	if (!currentUser) {
-		return next(new AppError('The user belonging to this token does no longer exist.', 401));
+		return next(
+			new AppError(
+				'The user belonging to this token does no longer exist.',
+				401,
+			),
+		);
 	}
 	if (currentUser.changedPasswordAfter(decoded.iat)) {
-		return next(new AppError('User recently changed password! Please log in again.', 401));
+		return next(
+			new AppError('User recently changed password! Please log in again.', 401),
+		);
 	}
 	req.user = currentUser;
 	next();
@@ -137,8 +179,10 @@ exports.protect = catchAsync(async (req, res, next) => {
 exports.restrictTo = (...roles) => {
 	return (req, res, next) => {
 		if (!roles.includes(req.user.role)) {
-			return next(new AppError('You do not have permission to perform this action', 403));
+			return next(
+				new AppError('You do not have permission to perform this action', 403),
+			);
 		}
 		next();
-	}
-}
+	};
+};

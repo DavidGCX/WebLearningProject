@@ -4,7 +4,21 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 // create user schema
-
+const loginTrySchema = new mongoose.Schema({
+	IP: {
+		type: String, // Using String to store IPs to accommodate IPv6
+		required: true,
+	},
+	success: {
+		type: Boolean,
+		required: true,
+	},
+	time: {
+		type: Date,
+		required: true,
+		default: Date.now, // Automatically set to the current time
+	},
+});
 const userSchema = new mongoose.Schema({
 	name: {
 		type: String,
@@ -43,11 +57,19 @@ const userSchema = new mongoose.Schema({
 	passwordChangedAt: Date,
 	passwordResetToken: String,
 	passwordResetExpires: Date,
+	loginAttempts: {
+		type: Number,
+		default: 0,
+		select: false,
+	},
+	lockUntil: Date,
+	IntervalRecordLogin: { type: [loginTrySchema], select: false },
 	active: {
 		type: Boolean,
 		default: true,
 		select: false,
 	},
+	lastLockAt: Date,
 });
 
 userSchema.pre(/^find/, function (next) {
@@ -61,7 +83,6 @@ userSchema.pre('save', function (next) {
 	next();
 });
 
-
 // encoding passwords
 userSchema.pre('save', async function (next) {
 	// this function only runs if password was actually modified
@@ -72,9 +93,7 @@ userSchema.pre('save', async function (next) {
 	next();
 });
 
-userSchema.methods.correctPassword = async function (
-	candidatePassword,
-) {
+userSchema.methods.correctPassword = async function (candidatePassword) {
 	return await bcrypt.compare(candidatePassword, this.password);
 };
 
@@ -82,7 +101,7 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 	if (this.passwordChangedAt) {
 		const changedTimestamp = parseInt(
 			this.passwordChangedAt.getTime() / 1000,
-			10
+			10,
 		);
 		return JWTTimestamp < changedTimestamp;
 	}
@@ -97,8 +116,68 @@ userSchema.methods.createPasswordResetToken = function () {
 		.update(resetToken)
 		.digest('hex');
 	console.log({ resetToken }, this.passwordResetToken);
-	this.passwordResetExpires = Date.now() + process.env.PASSWORD_RESET_EXPIRES_IN_MINUTE * 60 * 1000;
+	this.passwordResetExpires =
+		Date.now() + process.env.PASSWORD_RESET_EXPIRES_IN_MINUTE * 60 * 1000;
 	return resetToken;
-}
+};
+userSchema.methods.lockAccount = function (minutes) {
+	this.lockUntil = Date.now() + minutes * 60 * 1000;
+	this.lastLockAt = Date.now();
+};
+
+userSchema.methods.recordLogin = function (IP, success) {
+	this.IntervalRecordLogin.push({ IP, success });
+	if (this.IntervalRecordLogin.length > process.env.LOGIN_RECORD_LENGTH) {
+		this.IntervalRecordLogin.shift();
+	}
+	// check records make sure no more than 10 attempts in 1 minutes
+	// starting count from last lock time or the interval whenever is shorter
+	var timeLimit;
+	if (this.lastLockAt) {
+		timeLimit = Math.max(
+			Date.now() - process.env.LOGIN_TOO_FREQUENT_INTERVAL_MINUTE * 60 * 1000,
+			this.lastLockAt,
+		);
+	} else {
+		timeLimit =
+			Date.now() - process.env.LOGIN_TOO_FREQUENT_INTERVAL_MINUTE * 60 * 1000;
+	}
+	console.log(timeLimit);
+	const attempts = this.IntervalRecordLogin.filter(
+		(record) => record.time > timeLimit,
+	);
+	// only count failed attempts
+	attempts.filter((record) => !record.success);
+	console.log(attempts.length, process.env.LOGIN_TOO_FREQUENT_MAX_ATTEMPT);
+	// not refreshing time after being locked
+	if (
+		attempts.length > process.env.LOGIN_TOO_FREQUENT_MAX_ATTEMPT &&
+		!this.lockUntil
+	) {
+		this.lockAccount(process.env.LOGIN_TOO_FREQUENT_LOCK_UNTIL_MINUTE);
+	}
+	if (success) {
+		this.loginAttempts = 0;
+	}
+};
+
+userSchema.methods.loginAttempt = function () {
+	if (this.lockUntil) {
+		const lockTimestamp = parseInt(this.lockUntil.getTime(), 10);
+		if (lockTimestamp > Date.now()) {
+			return false;
+		} else {
+			this.lockUntil = undefined;
+			this.loginAttempts = 0;
+		}
+		return true;
+	}
+	if (this.loginAttempts >= process.env.LOGIN_MAXIMUM_ATTEMPT) {
+		this.lockAccount(process.env.LOGIN_MAX_ATTEMPT_LOCK_UNTIL_MINUTE);
+		return false;
+	}
+	this.loginAttempts = this.loginAttempts + 1;
+	return true;
+};
 
 module.exports = mongoose.model('User', userSchema);
