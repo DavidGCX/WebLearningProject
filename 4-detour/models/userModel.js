@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const slugify = require('slugify');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -77,6 +76,11 @@ userSchema.pre(/^find/, function (next) {
 	next();
 });
 
+userSchema.pre(/^find/, function (next) {
+	this.select('-__v');
+	next();
+});
+
 userSchema.pre('save', function (next) {
 	if (!this.isModified('password') || this.isNew) return next();
 	this.passwordChangedAt = Date.now() - 1000;
@@ -115,7 +119,6 @@ userSchema.methods.createPasswordResetToken = function () {
 		.createHash('sha256')
 		.update(resetToken)
 		.digest('hex');
-	console.log({ resetToken }, this.passwordResetToken);
 	this.passwordResetExpires =
 		Date.now() + process.env.PASSWORD_RESET_EXPIRES_IN_MINUTE * 60 * 1000;
 	return resetToken;
@@ -132,7 +135,7 @@ userSchema.methods.recordLogin = function (IP, success) {
 	}
 	// check records make sure no more than 10 attempts in 1 minutes
 	// starting count from last lock time or the interval whenever is shorter
-	var timeLimit;
+	let timeLimit;
 	if (this.lastLockAt) {
 		timeLimit = Math.max(
 			Date.now() - process.env.LOGIN_TOO_FREQUENT_INTERVAL_MINUTE * 60 * 1000,
@@ -142,13 +145,13 @@ userSchema.methods.recordLogin = function (IP, success) {
 		timeLimit =
 			Date.now() - process.env.LOGIN_TOO_FREQUENT_INTERVAL_MINUTE * 60 * 1000;
 	}
-	console.log(timeLimit);
+
 	const attempts = this.IntervalRecordLogin.filter(
 		(record) => record.time > timeLimit,
 	);
 	// only count failed attempts
 	attempts.filter((record) => !record.success);
-	console.log(attempts.length, process.env.LOGIN_TOO_FREQUENT_MAX_ATTEMPT);
+
 	// not refreshing time after being locked
 	if (
 		attempts.length > process.env.LOGIN_TOO_FREQUENT_MAX_ATTEMPT &&
@@ -166,17 +169,17 @@ userSchema.methods.loginAttempt = function () {
 		const lockTimestamp = parseInt(this.lockUntil.getTime(), 10);
 		if (lockTimestamp > Date.now()) {
 			return false;
-		} else {
-			this.lockUntil = undefined;
-			this.loginAttempts = 0;
 		}
+		this.lockUntil = undefined;
+		this.loginAttempts = 0;
 		return true;
 	}
 	if (this.loginAttempts >= process.env.LOGIN_MAXIMUM_ATTEMPT) {
 		this.lockAccount(process.env.LOGIN_MAX_ATTEMPT_LOCK_UNTIL_MINUTE);
 		return false;
 	}
-	this.loginAttempts = this.loginAttempts + 1;
+	this.loginAttempts += 1;
+
 	return true;
 };
 

@@ -101,6 +101,7 @@ tourSchema.pre('save', function (next) {
 tourSchema.pre(/^find/, function (next) {
 	this.find({ secretTour: { $ne: true } });
 	this.start = Date.now();
+
 	next();
 });
 
@@ -115,4 +116,5 @@ tourSchema.pre('aggregate', function (next) {
 	console.log(this.pipeline());
 	next();
 });
+
 module.exports = mongoose.model('Tour', tourSchema);

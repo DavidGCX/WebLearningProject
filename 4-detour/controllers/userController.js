@@ -2,15 +2,14 @@ const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
-const filterObj = (obj, ...allowedFields) => { 
-	
+const filterObj = (obj, ...allowedFields) => {
 	// Object.key does not work need to change method
 	const newObj = {};
 	Object.keys(obj).forEach((el) => {
 		if (allowedFields.includes(el)) newObj[el] = obj[el];
 	});
 	return newObj;
-}
+};
 
 exports.getUsers = catchAsync(async (req, res, next) => {
 	const users = await User.find();
@@ -24,11 +23,13 @@ exports.getUsers = catchAsync(async (req, res, next) => {
 });
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-	if (req.body.password || req.body.passwordConfirm) { 
-		return next(new AppError(
-			'THis route is not for password updates. Please use/updateMyPassword',
-			400
-		));
+	if (req.body.password || req.body.passwordConfirm) {
+		return next(
+			new AppError(
+				'THis route is not for password updates. Please use/updateMyPassword',
+				400,
+			),
+		);
 	}
 	// filter out unwanted fields names that are not allowed to be updated
 	const filteredBody = filterObj(req.body, 'name', 'email');
@@ -42,7 +43,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 		status: 'success',
 		data: {
 			user: updatedUser,
-		}
+		},
 	});
 });
 

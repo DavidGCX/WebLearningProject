@@ -1,18 +1,30 @@
+const jwt = require('jsonwebtoken');
+const { promisify } = require('util');
+const crypto = require('crypto');
+
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const jwt = require('jsonwebtoken');
-const { promisify } = require('util');
+
 const sendEmail = require('../utils/email');
-const crypto = require('crypto');
-const signToken = (id) => {
-	return jwt.sign({ id }, process.env.JWT_SECRET, {
+
+const signToken = (id) =>
+	jwt.sign({ id }, process.env.JWT_SECRET, {
 		expiresIn: process.env.JWT_EXPIRES_IN,
 	});
-};
 
 const createSendToken = (user, statusCode, res) => {
 	const token = signToken(user._id);
+	const cookieOptions = {
+		expires: new Date(
+			Date.now() + process.env.JWT_COOKIE_EXPIRES_IN_DAY * 24 * 60 * 60 * 1000,
+		),
+		httpOnly: true,
+	};
+
+	if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+	user.password = undefined;
+	res.cookie('jwt', token, cookieOptions);
 	res.status(statusCode).json({
 		status: 'success',
 		token,
@@ -73,13 +85,14 @@ exports.login = catchAsync(async (req, res, next) => {
 		);
 	}
 	user.save({ validateBeforeSave: false });
+	user.IntervalRecordLogin = undefined;
 	createSendToken(user, 200, res);
 });
 
 exports.forgetPassword = catchAsync(async (req, res, next) => {
-	const user = await User.findOne({ email: req.body.email }).select(
-		'+password',
-	);
+	const user = await User.findOne({
+		email: req.body.email,
+	}).select('+password');
 	if (!user) {
 		return next(new AppError('There is no user with email address', 404));
 	}
@@ -102,7 +115,6 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 			resetToken,
 		});
 	} catch (err) {
-		console.log(err);
 		user.passwordResetToken = undefined;
 		user.passwordResetExpires = undefined;
 		await user.save({ validateBeforeSave: false });
@@ -116,7 +128,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
-	const resetToken = req.params.resetToken;
+	const { resetToken } = req.params.resetToken;
 	const hashedToken = crypto
 		.createHash('sha256')
 		.update(resetToken)
@@ -176,8 +188,9 @@ exports.protect = catchAsync(async (req, res, next) => {
 	next();
 });
 
-exports.restrictTo = (...roles) => {
-	return (req, res, next) => {
+exports.restrictTo =
+	(...roles) =>
+	(req, res, next) => {
 		if (!roles.includes(req.user.role)) {
 			return next(
 				new AppError('You do not have permission to perform this action', 403),
@@ -185,4 +198,3 @@ exports.restrictTo = (...roles) => {
 		}
 		next();
 	};
-};
