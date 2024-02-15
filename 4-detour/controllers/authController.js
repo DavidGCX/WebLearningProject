@@ -66,7 +66,7 @@ exports.login = catchAsync(async (req, res, next) => {
 	if (!(await user.correctPassword(password))) {
 		user.recordLogin(req.ip, false);
 		if (!user.loginAttempt()) {
-			user.save({ validateBeforeSave: false });
+			await user.save({ validateBeforeSave: false });
 			return next(
 				new AppError(
 					'You have reached the maximum number of login attempts or login too frequent. Please try again later!',
@@ -74,18 +74,20 @@ exports.login = catchAsync(async (req, res, next) => {
 				),
 			);
 		}
-		user.save({ validateBeforeSave: false });
+		await user.save({ validateBeforeSave: false });
 		return next(new AppError('Incorrect email or password', 401));
 	}
 	user.recordLogin(req.ip, true);
 	if (!user.loginAttempt()) {
-		user.save({ validateBeforeSave: false });
+		await user.save({ validateBeforeSave: false });
 		return next(
 			new AppError('You login too frequent. Please try again later!', 429),
 		);
 	}
-	user.save({ validateBeforeSave: false });
+	await user.save({ validateBeforeSave: false });
+	// Do not wish to send to the client but need to keep the information
 	user.IntervalRecordLogin = undefined;
+	user.loginAttempts = undefined;
 	createSendToken(user, 200, res);
 });
 

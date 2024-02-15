@@ -20,7 +20,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 // limit requests from same API
 const limiter = rateLimit({
-	max: 3,
+	max: process.env.MAX_REQUESTS_PER_HOUR,
 	windowMs: 60 * 60 * 1000,
 	message: 'Too many requests from this IP, please try again in an hour!',
 });
@@ -66,10 +66,11 @@ app.use((req, res, next) => {
 // ROUTES
 const usersRouter = require('./routes/userRoutes');
 const toursRouter = require('./routes/tourRoutes');
+const reviewsRouter = require('./routes/reviewRoutes');
 
 app.use('/api/v1/tours', toursRouter);
 app.use('/api/v1/users', usersRouter);
-
+app.use('/api/v1/reviews', reviewsRouter);
 // When we have a request that doesn't match any of the routes above,
 // we want to send back an error message.
 

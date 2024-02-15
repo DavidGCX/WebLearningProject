@@ -10,7 +10,12 @@
 		"import": "node ./dev-data/data/import-dev-data.js --import",
 		"delete": "node ./dev-data/data/import-dev-data.js --delete",
 		"debug": "sudo ndb server.js",
-		"deleteUser": "node ./dev-data/data/import-dev-data.js --deleteUser"
+		"deleteUser": "node ./dev-data/data/import-dev-data.js --deleteUser",
+		"importUser": "node ./dev-data/data/import-dev-data.js --importUser",
+		"importReview": "node ./dev-data/data/import-dev-data.js --importReview",
+		"deleteReview": "node ./dev-data/data/import-dev-data.js --deleteReview",
+		"updateRepo": "node ./dev-data/data/import-dev-data.js --updateRepo",
+		"deleteRepo": "node ./dev-data/data/import-dev-data.js --deleteRepo"
 	},
 	"author": "Chenxin Gao",
 	"license": "ISC",

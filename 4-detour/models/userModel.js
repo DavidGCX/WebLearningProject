@@ -91,6 +91,7 @@ userSchema.pre('save', function (next) {
 userSchema.pre('save', async function (next) {
 	// this function only runs if password was actually modified
 	if (!this.isModified('password')) return next();
+
 	this.password = await bcrypt.hash(this.password, 12);
 	// after create we do not need to store passwordConfirm
 	this.passwordConfirm = undefined;

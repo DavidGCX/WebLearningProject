@@ -3,6 +3,10 @@ const authController = require('../controllers/authController');
 
 const toursRouter = express.Router();
 const tourController = require('../controllers/tourController');
+const reviewRouter = require('./reviewRoutes');
+// re route to reviewRouter
+toursRouter.use('/:tourId/reviews', reviewRouter);
+
 // Check ID exist
 // toursRouter.param('id', tourController.checkID);
 toursRouter
