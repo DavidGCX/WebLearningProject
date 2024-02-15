@@ -23,10 +23,22 @@ usersRouter.delete(
 usersRouter
 	.route('/')
 	.get(userController.getUsers)
-	.post(userController.createUser);
+	.post(
+		authController.protect,
+		authController.restrictTo('admin'),
+		userController.createUser,
+	);
 usersRouter
 	.route('/:id')
 	.get(userController.getUser)
-	.patch(userController.patchUser)
-	.delete(userController.deleteUser);
+	.patch(
+		authController.protect,
+		authController.restrictTo('admin'),
+		userController.patchUser,
+	)
+	.delete(
+		authController.protect,
+		authController.restrictTo('admin'),
+		userController.deleteUser,
+	);
 module.exports = usersRouter;

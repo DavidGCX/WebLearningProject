@@ -9,13 +9,26 @@ reviewRouter
 	.post(
 		authController.protect,
 		authController.restrictTo('user'),
+		reviewController.setTourUserIds,
 		reviewController.createReview,
 	)
 	.get(reviewController.getAllReview);
 reviewRouter
 	.route('/:id')
-	.get(reviewController.getReview)
-	.patch(reviewController.updateReview)
-	.delete(reviewController.deleteReview);
+	.get(
+		authController.protect,
+		authController.restrictTo('admin', 'user'),
+		reviewController.getReview,
+	)
+	.patch(
+		authController.protect,
+		authController.restrictTo('admin', 'user'),
+		reviewController.updateReview,
+	)
+	.delete(
+		authController.protect,
+		authController.restrictTo('admin', 'user'),
+		reviewController.deleteReview,
+	);
 
 module.exports = reviewRouter;
