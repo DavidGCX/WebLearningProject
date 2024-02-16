@@ -9,36 +9,22 @@ usersRouter.post('/login', authController.login);
 
 usersRouter.post('/forgetPassword', authController.forgetPassword);
 usersRouter.patch('/resetPassword/:resetToken', authController.resetPassword);
-usersRouter.patch(
-	'/updateMyPassword',
-	authController.protect,
-	authController.updatePassword,
-);
-usersRouter.patch('/updateMe', authController.protect, userController.updateMe);
-usersRouter.delete(
-	'/deleteMe',
-	authController.protect,
-	userController.deleteMe,
-);
+// due to the sequential nature of the middleware, we can use the protect middleware to protect the routes that come after it
+usersRouter.use(authController.protect);
+usersRouter.patch('/updateMyPassword', authController.updatePassword);
+
+usersRouter.get('/me', userController.getMe, userController.getUser);
+usersRouter.patch('/updateMe', userController.updateMe);
+usersRouter.delete('/deleteMe', userController.deleteMe);
+
+usersRouter.use(authController.restrictTo('admin'));
 usersRouter
 	.route('/')
 	.get(userController.getUsers)
-	.post(
-		authController.protect,
-		authController.restrictTo('admin'),
-		userController.createUser,
-	);
+	.post(userController.createUser);
 usersRouter
 	.route('/:id')
 	.get(userController.getUser)
-	.patch(
-		authController.protect,
-		authController.restrictTo('admin'),
-		userController.patchUser,
-	)
-	.delete(
-		authController.protect,
-		authController.restrictTo('admin'),
-		userController.deleteUser,
-	);
+	.patch(userController.patchUser)
+	.delete(userController.deleteUser);
 module.exports = usersRouter;

@@ -5,8 +5,8 @@
 	"main": "server.js",
 	"scripts": {
 		"start": "nodemon server.js",
-		"test": "echo \"Error: no test specified\" && exit 1",
 		"production": "NODE_ENV=production nodemon server.js",
+		"DBEX": "NODE_ENV=DBExplain nodemon server.js",
 		"import": "node ./dev-data/data/import-dev-data.js --import",
 		"delete": "node ./dev-data/data/import-dev-data.js --delete",
 		"debug": "sudo ndb server.js",

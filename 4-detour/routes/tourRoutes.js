@@ -11,8 +11,12 @@ toursRouter.use('/:tourId/reviews', reviewRouter);
 // toursRouter.param('id', tourController.checkID);
 toursRouter
 	.route('/')
-	.get(authController.protect, tourController.getAllTours)
-	.post(tourController.createTour);
+	.get(tourController.getAllTours)
+	.post(
+		authController.protect,
+		authController.restrictTo('admin', 'lead-guide'),
+		tourController.createTour,
+	);
 toursRouter
 	.route('/top-5-cheap')
 	.get(
@@ -29,7 +33,11 @@ toursRouter
 toursRouter
 	.route('/:id')
 	.get(tourController.getTour)
-	.patch(tourController.updateTour)
+	.patch(
+		authController.protect,
+		authController.restrictTo('admin', 'lead-guide'),
+		tourController.updateTour,
+	)
 	.delete(
 		authController.protect,
 		authController.restrictTo('admin', 'lead-guide'),

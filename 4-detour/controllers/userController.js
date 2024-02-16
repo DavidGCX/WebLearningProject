@@ -51,6 +51,12 @@ exports.createUser = (req, res) => {
 		message: 'This route is not defined! Please use /signup instead',
 	});
 };
+
+exports.getMe = (req, res, next) => {
+	req.params.id = req.user.id;
+	next();
+};
+
 exports.getUsers = Factory.getAll(User);
 exports.getUser = Factory.getOne(User);
 // Do NOT update passwords with this!

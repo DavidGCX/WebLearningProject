@@ -66,7 +66,12 @@ exports.getAll = (Model) =>
 			.sort()
 			.limitFields()
 			.paginate();
-		const doc = await features.query;
+		let doc;
+		if (process.env.NODE_ENV === 'DBExplain') {
+			doc = await features.query.explain();
+		} else {
+			doc = await features.query;
+		}
 		res.status(200).json({
 			status: 'success',
 			results: doc.length,

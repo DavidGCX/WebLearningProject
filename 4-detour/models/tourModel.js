@@ -113,6 +113,14 @@ const tourSchema = new mongoose.Schema(
 	{ toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
 
+// Indexing
+// tourSchema.index({ price: 1 });
+
+// Compound index
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+
 tourSchema.virtual('durationWeeks').get(function () {
 	return this.duration / 7;
 });
