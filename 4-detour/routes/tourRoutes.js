@@ -9,14 +9,7 @@ toursRouter.use('/:tourId/reviews', reviewRouter);
 
 // Check ID exist
 // toursRouter.param('id', tourController.checkID);
-toursRouter
-	.route('/')
-	.get(tourController.getAllTours)
-	.post(
-		authController.protect,
-		authController.restrictTo('admin', 'lead-guide'),
-		tourController.createTour,
-	);
+
 toursRouter
 	.route('/top-5-cheap')
 	.get(
@@ -29,7 +22,26 @@ toursRouter
 	.get(authController.protect, tourController.getTourStats);
 toursRouter
 	.route('/monthly-plan/:year')
-	.get(authController.protect, tourController.getMonthlyPlan);
+	.get(
+		authController.protect,
+		authController.restrictTo('admin', 'lead-guide', 'guide'),
+		tourController.getMonthlyPlan,
+	);
+// /tours-within/233/center/34.111745,-118.113491/unit/mi
+toursRouter
+	.route('/tours-within/:distance/center/:latlng/unit/:unit')
+	.get(tourController.getToursWithin);
+toursRouter
+	.route('/distances/:latlng/unit/:unit')
+	.get(tourController.getDistances);
+toursRouter
+	.route('/')
+	.get(tourController.getAllTours)
+	.post(
+		authController.protect,
+		authController.restrictTo('admin', 'lead-guide'),
+		tourController.createTour,
+	);
 toursRouter
 	.route('/:id')
 	.get(tourController.getTour)
