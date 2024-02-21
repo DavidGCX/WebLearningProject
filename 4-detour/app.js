@@ -1,6 +1,5 @@
 const express = require('express');
-
-const app = express();
+const path = require('path');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
@@ -10,6 +9,11 @@ const hpp = require('hpp');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
+
+const app = express();
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 //set security HTTP headers
 app.use(helmet());
@@ -55,12 +59,18 @@ app.use(
 		],
 	}),
 );
-app.use(express.static(`${__dirname}/public`));
 
 // request time
 app.use((req, res, next) => {
 	req.requestTime = new Date().toISOString();
 	next();
+});
+
+app.get('/', (req, res) => {
+	res.status(200).render('base', {
+		tour: 'Test Tour',
+		user: 'Jonas',
+	});
 });
 
 // ROUTES
