@@ -66,18 +66,13 @@ app.use((req, res, next) => {
 	next();
 });
 
-app.get('/', (req, res) => {
-	res.status(200).render('base', {
-		tour: 'Test Tour',
-		user: 'Jonas',
-	});
-});
-
 // ROUTES
 const usersRouter = require('./routes/userRoutes');
 const toursRouter = require('./routes/tourRoutes');
 const reviewsRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
+app.use('/', viewRouter);
 app.use('/api/v1/tours', toursRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/reviews', reviewsRouter);
