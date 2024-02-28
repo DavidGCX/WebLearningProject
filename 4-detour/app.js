@@ -19,7 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //set security HTTP headers
 app.use(helmet());
 
-// decvelopment logging
+// development logging
 if (process.env.NODE_ENV === 'development') {
 	app.use(morgan('dev'));
 }
@@ -39,6 +39,7 @@ app.use((req, res, next) => {
 
 // body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL query injection
@@ -65,7 +66,6 @@ app.use(
 // request time
 app.use((req, res, next) => {
 	req.requestTime = new Date().toISOString();
-	console.log(req.cookies);
 	next();
 });
 

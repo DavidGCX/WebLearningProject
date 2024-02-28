@@ -13,6 +13,7 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 exports.updateMe = catchAsync(async (req, res, next) => {
+	console.log(req.body);
 	if (req.body.password || req.body.passwordConfirm) {
 		return next(
 			new AppError(

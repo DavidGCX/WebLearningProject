@@ -34,6 +34,14 @@ const createSendToken = (user, statusCode, res) => {
 	});
 };
 
+exports.logout = (req, res) => {
+	res.cookie('jwt', 'loggedout', {
+		expires: new Date(Date.now() + 10 * 1000),
+		httpOnly: true,
+	});
+	res.status(200).json({ status: 'success' });
+};
+
 exports.signup = catchAsync(async (req, res, next) => {
 	// This is a dangerous way to create a user
 	//const newUser = await User.create(req.body);
@@ -152,7 +160,8 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
 	const user = await User.findById(req.user.id).select('+password');
-	if (!(await user.correctPassword(JSON.stringify(req.body.passwordCurrent)))) {
+	console.log(req.body);
+	if (!(await user.correctPassword(req.body.passwordCurrent))) {
 		return next(new AppError('Your current password is wrong', 401));
 	}
 	user.password = req.body.password;
@@ -191,29 +200,41 @@ exports.protect = catchAsync(async (req, res, next) => {
 			new AppError('User recently changed password! Please log in again.', 401),
 		);
 	}
+	if (!currentUser.photo) {
+		currentUser.photo = 'default.jpg';
+	}
 	req.user = currentUser;
+	res.locals.user = currentUser;
 	next();
 });
 // only for rendered pages, no errors
-exports.isLoggedIn = catchAsync(async (req, res, next) => {
+exports.isLoggedIn = async (req, res, next) => {
 	if (req.cookies.jwt) {
-		const token = req.cookies.jwt;
-		const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-		const currentUser = await User.findById(decoded.id);
-		if (!currentUser) {
+		try {
+			const token = req.cookies.jwt;
+			const decoded = await promisify(jwt.verify)(
+				token,
+				process.env.JWT_SECRET,
+			);
+			const currentUser = await User.findById(decoded.id);
+			if (!currentUser) {
+				return next();
+			}
+			if (currentUser.changedPasswordAfter(decoded.iat)) {
+				return next();
+			}
+			if (!currentUser.photo) {
+				currentUser.photo = 'default.jpg';
+			}
+			res.locals.user = currentUser;
+			return next();
+		} catch (err) {
+			// no login user
 			return next();
 		}
-		if (currentUser.changedPasswordAfter(decoded.iat)) {
-			return next();
-		}
-		if (!currentUser.photo) {
-			currentUser.photo = 'default.jpg';
-		}
-		res.locals.user = currentUser;
-		return next();
 	}
 	next();
-});
+};
 
 exports.restrictTo =
 	(...roles) =>

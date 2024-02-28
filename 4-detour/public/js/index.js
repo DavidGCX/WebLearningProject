@@ -1,11 +1,64 @@
 /*eslint-disable*/
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import { login } from './login';
+import { displayMap } from './mapbox';
+import { login, logout } from './login';
+import { updateSettings } from './updateSettings';
+// DOM ELEMENTS
+const mapBox = document.getElementById('map');
+const loginForm = document.querySelector('.form--login');
+const logoutBtn = document.querySelector('.nav__el--logout');
+const updateUserDataForm = document.querySelector('.form-user-data');
+const userPasswordForm = document.querySelector('.form-user-password');
+if (mapBox) {
+	const locations = JSON.parse(mapBox.dataset.locations);
+	displayMap(locations);
+}
 
-document.querySelector('.form').addEventListener('submit', function (e) {
-	e.preventDefault();
-	const email = document.getElementById('email').value;
-	const password = document.getElementById('password').value;
-	login(email, password);
-});
+if (loginForm) {
+	loginForm.addEventListener('submit', (e) => {
+		e.preventDefault();
+		const email = document.getElementById('email').value;
+		const password = document.getElementById('password').value;
+		login(email, password);
+	});
+}
+
+if (logoutBtn) {
+	logoutBtn.addEventListener('click', () => {
+		logout();
+	});
+}
+if (updateUserDataForm) {
+	updateUserDataForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		document.querySelector('.btn--save-settings').textContent = 'Updating...';
+		//form.append('photo', document.getElementById('photo').files[0]);
+		await updateSettings(
+			{
+				name: document.getElementById('name').value,
+				email: document.getElementById('email').value,
+			},
+			'data',
+		);
+		document.querySelector('.btn--save-settings').textContent = 'Save settings';
+	});
+}
+
+if (userPasswordForm) {
+	userPasswordForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		document.querySelector('.btn--save-password').textContent = 'Updating...';
+		const passwordCurrent = document.getElementById('password-current').value;
+		const password = document.getElementById('password').value;
+		const passwordConfirm = document.getElementById('password-confirm').value;
+		await updateSettings(
+			{ passwordCurrent, password, passwordConfirm },
+			'password',
+		);
+		document.querySelector('.btn--save-password').textContent = 'Save password';
+		document.getElementById('password-current').value = '';
+		document.getElementById('password').value = '';
+		document.getElementById('password-confirm').value = '';
+	});
+}
