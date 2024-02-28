@@ -1,7 +1,38 @@
+const multer = require('multer');
+const sharp = require('sharp');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Factory = require('./handlerFactory');
+
+// const multerStorage = multer.diskStorage({
+// 	destination: (req, file, cb) => {
+// 		cb(null, 'public/img/users');
+// 	},
+// 	filename: (req, file, cb) => {
+// 		// user-7676767daf77-34343434.jpeg
+// 		// take mimetype and split it with '/'
+// 		const ext = file.mimetype.split('/')[1];
+// 		cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
+// 	},
+// });
+
+const multerStorage = multer.memoryStorage();
+
+// filter out unwanted files: for this is image,
+// can be used for other file types
+const multerFilter = (req, file, cb) => {
+	if (file.mimetype.startsWith('image')) {
+		cb(null, true);
+	} else {
+		cb(new AppError('Not an image! Please upload only images.', 400), false);
+	}
+};
+
+const upload = multer({
+	storage: multerStorage,
+	fileFilter: multerFilter,
+});
 
 const filterObj = (obj, ...allowedFields) => {
 	// Object.key does not work need to change method
@@ -12,8 +43,20 @@ const filterObj = (obj, ...allowedFields) => {
 	return newObj;
 };
 
+exports.uploadUserPhoto = upload.single('photo');
+
+exports.resizeUserPhoto = (req, res, next) => {
+	if (!req.file) return next();
+	req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+	sharp(req.file.buffer)
+		.resize(800, 800)
+		.toFormat('jpeg')
+		.jpeg({ quality: 90 })
+		.toFile(`public/img/users/${req.file.filename}`);
+	next();
+};
+
 exports.updateMe = catchAsync(async (req, res, next) => {
-	console.log(req.body);
 	if (req.body.password || req.body.passwordConfirm) {
 		return next(
 			new AppError(
@@ -24,6 +67,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 	}
 	// filter out unwanted fields names that are not allowed to be updated
 	const filteredBody = filterObj(req.body, 'name', 'email');
+	if (req.file) filteredBody.photo = req.file.filename;
 	const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
 		// return the new object
 		new: true,

@@ -33,14 +33,11 @@ if (updateUserDataForm) {
 	updateUserDataForm.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		document.querySelector('.btn--save-settings').textContent = 'Updating...';
-		//form.append('photo', document.getElementById('photo').files[0]);
-		await updateSettings(
-			{
-				name: document.getElementById('name').value,
-				email: document.getElementById('email').value,
-			},
-			'data',
-		);
+		const form = new FormData();
+		form.append('name', document.getElementById('name').value);
+		form.append('email', document.getElementById('email').value);
+		form.append('photo', document.getElementById('photo').files[0]);
+		await updateSettings(form, 'data');
 		document.querySelector('.btn--save-settings').textContent = 'Save settings';
 	});
 }

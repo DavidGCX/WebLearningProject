@@ -606,11 +606,11 @@ if (logoutBtn) logoutBtn.addEventListener("click", ()=>{
 if (updateUserDataForm) updateUserDataForm.addEventListener("submit", async (e)=>{
     e.preventDefault();
     document.querySelector(".btn--save-settings").textContent = "Updating...";
-    //form.append('photo', document.getElementById('photo').files[0]);
-    await (0, _updateSettings.updateSettings)({
-        name: document.getElementById("name").value,
-        email: document.getElementById("email").value
-    }, "data");
+    const form = new FormData();
+    form.append("name", document.getElementById("name").value);
+    form.append("email", document.getElementById("email").value);
+    form.append("photo", document.getElementById("photo").files[0]);
+    await (0, _updateSettings.updateSettings)(form, "data");
     document.querySelector(".btn--save-settings").textContent = "Save settings";
 });
 if (userPasswordForm) userPasswordForm.addEventListener("submit", async (e)=>{
@@ -2556,7 +2556,7 @@ const logout = async ()=>{
     }
 };
 
-},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./alerts":"6Mcnf"}],"jo6P5":[function(require,module,exports) {
+},{"axios":"jo6P5","./alerts":"6Mcnf","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>(0, _axiosJsDefault.default));
