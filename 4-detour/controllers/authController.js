@@ -43,6 +43,7 @@ exports.logout = (req, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
+	// TODO: Send email to verify email
 	// This is a dangerous way to create a user
 	//const newUser = await User.create(req.body);
 	// Instead, we should create a new object and then save it
@@ -72,6 +73,9 @@ exports.login = catchAsync(async (req, res, next) => {
 		.select('+IntervalRecordLogin');
 	if (!user) {
 		return next(new AppError('Email Not Exist', 401));
+	}
+	if (!user.emailVerified) {
+		return next(new AppError('Please verify your email', 401));
 	}
 
 	if (!(await user.correctPassword(password))) {

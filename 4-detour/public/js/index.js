@@ -2,7 +2,7 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import { displayMap } from './mapbox';
-import { login, logout } from './login';
+import { login, logout, signup } from './login';
 import { updateSettings } from './updateSettings';
 import { forgetPassword, resetPassword } from './forgetPassword';
 // DOM ELEMENTS
@@ -13,6 +13,7 @@ const updateUserDataForm = document.querySelector('.form-user-data');
 const userPasswordForm = document.querySelector('.form-user-password');
 const resetPasswordForm = document.querySelector('.form--ResetPassword');
 const forgetPasswordForm = document.querySelector('.form--ForgetPassword');
+const signupForm = document.querySelector('.form--signUp');
 if (mapBox) {
 	const locations = JSON.parse(mapBox.dataset.locations);
 	displayMap(locations);
@@ -35,6 +36,16 @@ if (forgetPasswordForm) {
 		forgetPassword(email);
 	});
 }
+if (signupForm) {
+	signupForm.addEventListener('submit', (e) => {
+		e.preventDefault();
+		const name = document.getElementById('name').value;
+		const email = document.getElementById('email').value;
+		const password = document.getElementById('password').value;
+		const passwordConfirm = document.getElementById('password-confirm').value;
+		signup(name, email, password, passwordConfirm);
+	});
+}
 
 if (loginForm) {
 	loginForm.addEventListener('submit', (e) => {
@@ -50,6 +61,7 @@ if (logoutBtn) {
 		logout();
 	});
 }
+
 if (updateUserDataForm) {
 	updateUserDataForm.addEventListener('submit', async (e) => {
 		e.preventDefault();

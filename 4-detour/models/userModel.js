@@ -72,6 +72,10 @@ const userSchema = new mongoose.Schema({
 		select: false,
 	},
 	lastLockAt: Date,
+	emailVerified: {
+		type: Boolean,
+		default: false,
+	},
 });
 
 userSchema.pre(/^find/, function (next) {

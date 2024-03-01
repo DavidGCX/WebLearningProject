@@ -593,6 +593,7 @@ const updateUserDataForm = document.querySelector(".form-user-data");
 const userPasswordForm = document.querySelector(".form-user-password");
 const resetPasswordForm = document.querySelector(".form--ResetPassword");
 const forgetPasswordForm = document.querySelector(".form--ForgetPassword");
+const signupForm = document.querySelector(".form--signUp");
 if (mapBox) {
     const locations = JSON.parse(mapBox.dataset.locations);
     (0, _mapbox.displayMap)(locations);
@@ -610,6 +611,14 @@ if (forgetPasswordForm) forgetPasswordForm.addEventListener("submit", (e)=>{
     e.preventDefault();
     const email = document.getElementById("email").value;
     (0, _forgetPassword.forgetPassword)(email);
+});
+if (signupForm) signupForm.addEventListener("submit", (e)=>{
+    e.preventDefault();
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const passwordConfirm = document.getElementById("password-confirm").value;
+    (0, _login.signup)(name, email, password, passwordConfirm);
 });
 if (loginForm) loginForm.addEventListener("submit", (e)=>{
     e.preventDefault();
@@ -2538,6 +2547,7 @@ exports.export = function(dest, destName, get) {
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "login", ()=>login);
 parcelHelpers.export(exports, "logout", ()=>logout);
+parcelHelpers.export(exports, "signup", ()=>signup);
 var _axios = require("axios");
 var _axiosDefault = parcelHelpers.interopDefault(_axios);
 var _alerts = require("./alerts");
@@ -2570,6 +2580,28 @@ const logout = async ()=>{
         if (res.data.status === "success") location.reload(true);
     } catch (err) {
         (0, _alerts.showAlert)("error", "Error logging out! Try again.");
+    }
+};
+const signup = async (name, email, password, passwordConfirm)=>{
+    try {
+        const res = await (0, _axiosDefault.default)({
+            method: "POST",
+            url: "/api/v1/users/signup",
+            data: {
+                name,
+                email,
+                password,
+                passwordConfirm
+            }
+        });
+        if (res.data.status === "success") {
+            (0, _alerts.showAlert)("success", "Signed up successfully! Check your email to verify your account.");
+            window.setTimeout(()=>{
+                location.assign("/");
+            }, 1500);
+        }
+    } catch (err) {
+        (0, _alerts.showAlert)("error", err.response.data.message);
     }
 };
 

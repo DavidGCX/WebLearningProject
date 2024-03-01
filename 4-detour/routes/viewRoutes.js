@@ -16,6 +16,8 @@ viewRouter.get(
 	viewController.getLoginForm,
 );
 
+viewRouter.get('/signup', viewController.getSignupForm);
+
 viewRouter.get('/forgetPassword', viewController.getForgetPasswordForm);
 
 viewRouter.get('/resetPassword/:token', viewController.getResetPasswordForm);
