@@ -594,6 +594,7 @@ const userPasswordForm = document.querySelector(".form-user-password");
 const resetPasswordForm = document.querySelector(".form--ResetPassword");
 const forgetPasswordForm = document.querySelector(".form--ForgetPassword");
 const signupForm = document.querySelector(".form--signUp");
+const emailVerified = document.querySelector(".email-verified");
 if (mapBox) {
     const locations = JSON.parse(mapBox.dataset.locations);
     (0, _mapbox.displayMap)(locations);
@@ -655,6 +656,9 @@ if (userPasswordForm) userPasswordForm.addEventListener("submit", async (e)=>{
     document.getElementById("password").value = "";
     document.getElementById("password-confirm").value = "";
 });
+if (emailVerified) setTimeout(()=>{
+    location.assign("/me");
+}, 1500);
 
 },{"core-js/modules/web.immediate.js":"hXBmk","regenerator-runtime/runtime":"dK8cB","./mapbox":"6Fko3","./login":"jU3bj","./updateSettings":"jGyf2","./forgetPassword":"haCqR"}],"hXBmk":[function(require,module,exports) {
 "use strict";
@@ -2561,12 +2565,13 @@ const login = async (email, password)=>{
                 password
             }
         });
+        console.log(res.data.status);
         if (res.data.status === "success") {
             (0, _alerts.showAlert)("success", "Logged in successfully!");
             window.setTimeout(()=>{
                 location.assign("/");
             }, 1500);
-        }
+        } else if (res.data.status === "not verified") (0, _alerts.showAlert)("error", "Please verify your email before logging in.");
     } catch (err) {
         (0, _alerts.showAlert)("error", err.response.data.message);
     }
@@ -2577,7 +2582,9 @@ const logout = async ()=>{
             method: "GET",
             url: "/api/v1/users/logout"
         });
-        if (res.data.status === "success") location.reload(true);
+        if (res.data.status === "success") window.setTimeout(()=>{
+            location.assign("/");
+        }, 500);
     } catch (err) {
         (0, _alerts.showAlert)("error", "Error logging out! Try again.");
     }
@@ -2594,10 +2601,11 @@ const signup = async (name, email, password, passwordConfirm)=>{
                 passwordConfirm
             }
         });
-        if (res.data.status === "success") {
-            (0, _alerts.showAlert)("success", "Signed up successfully! Check your email to verify your account.");
+        if (res.data.status === "success") (0, _alerts.showAlert)("success", "Signed up successfully! Check your email to verify your account.");
+        else if (res.data.status === "not verified") {
+            (0, _alerts.showAlert)("success", "A verification email has been sent to your email.");
             window.setTimeout(()=>{
-                location.assign("/");
+                location.assign("/emailWaitForVerify");
             }, 1500);
         }
     } catch (err) {

@@ -59,6 +59,8 @@ const userSchema = new mongoose.Schema({
 	passwordChangedAt: Date,
 	passwordResetToken: String,
 	passwordResetExpires: Date,
+	verifyToken: String,
+	verifyTokenExpires: Date,
 	loginAttempts: {
 		type: Number,
 		default: 0,
@@ -131,6 +133,18 @@ userSchema.methods.createPasswordResetToken = function () {
 		Date.now() + process.env.PASSWORD_RESET_EXPIRES_IN_MINUTE * 60 * 1000;
 	return resetToken;
 };
+
+userSchema.methods.createVerifyToken = function () {
+	const verifyToken = crypto.randomBytes(32).toString('hex');
+	this.verifyToken = crypto
+		.createHash('sha256')
+		.update(verifyToken)
+		.digest('hex');
+	this.verifyTokenExpires =
+		Date.now() + process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINUTE * 60 * 1000;
+	return verifyToken;
+};
+
 userSchema.methods.lockAccount = function (minutes) {
 	this.lockUntil = Date.now() + minutes * 60 * 1000;
 	this.lastLockAt = Date.now();

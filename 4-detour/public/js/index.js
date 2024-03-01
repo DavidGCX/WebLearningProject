@@ -14,6 +14,7 @@ const userPasswordForm = document.querySelector('.form-user-password');
 const resetPasswordForm = document.querySelector('.form--ResetPassword');
 const forgetPasswordForm = document.querySelector('.form--ForgetPassword');
 const signupForm = document.querySelector('.form--signUp');
+const emailVerified = document.querySelector('.email-verified');
 if (mapBox) {
 	const locations = JSON.parse(mapBox.dataset.locations);
 	displayMap(locations);
@@ -91,4 +92,10 @@ if (userPasswordForm) {
 		document.getElementById('password').value = '';
 		document.getElementById('password-confirm').value = '';
 	});
+}
+
+if (emailVerified) {
+	setTimeout(() => {
+		location.assign('/me');
+	}, 1500);
 }

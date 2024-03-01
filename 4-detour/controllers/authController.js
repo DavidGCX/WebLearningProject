@@ -13,7 +13,7 @@ const signToken = (id) =>
 		expiresIn: process.env.JWT_EXPIRES_IN,
 	});
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = (user, statusCode, res, status = 'success') => {
 	const token = signToken(user._id);
 	const cookieOptions = {
 		expires: new Date(
@@ -26,7 +26,7 @@ const createSendToken = (user, statusCode, res) => {
 	user.password = undefined;
 	res.cookie('jwt', token, cookieOptions);
 	res.status(statusCode).json({
-		status: 'success',
+		status,
 		token,
 		data: {
 			user,
@@ -54,11 +54,13 @@ exports.signup = catchAsync(async (req, res, next) => {
 		passwordConfirm: req.body.passwordConfirm,
 		passwordChangedAt: Date.now(),
 	});
-	const url = `${req.protocol}://${req.get('host')}/me`;
+	const verifyToken = newUser.createVerifyToken();
+	newUser.save({ validateBeforeSave: false });
+	const url = `${req.protocol}://${req.get('host')}/verifyEmail/${verifyToken}`;
 
 	await new Email(newUser, url).sendWelcome();
 
-	createSendToken(newUser, 201, res);
+	createSendToken(newUser, 201, res, 'not verified');
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -75,7 +77,12 @@ exports.login = catchAsync(async (req, res, next) => {
 		return next(new AppError('Email Not Exist', 401));
 	}
 	if (!user.emailVerified) {
-		return next(new AppError('Please verify your email', 401));
+		const verifyToken = user.createVerifyToken();
+		user.save({ validateBeforeSave: false });
+		const url = `${req.protocol}://${req.get('host')}/verifyEmail/${verifyToken}`;
+
+		await new Email(user, url).sendWelcome();
+		return createSendToken(user, 200, res, 'not verified');
 	}
 
 	if (!(await user.correctPassword(password))) {
@@ -114,7 +121,6 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 		return next(new AppError('There is no user with email address', 404));
 	}
 	const resetToken = user.createPasswordResetToken();
-	// another way to pass validation is user.save({validateBeforeSave: false});
 	user.save({ validateBeforeSave: false });
 
 	const resetURL = `${req.protocol}://${req.get('host')}/resetPassword/${resetToken}`;
@@ -124,7 +130,6 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 		res.status(200).json({
 			status: 'success',
 			message: 'Token sent to email!',
-			resetToken,
 		});
 	} catch (err) {
 		user.passwordResetToken = undefined;
@@ -189,10 +194,25 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 	const currentUser = await User.findById(decoded.id);
+
 	if (!currentUser) {
 		return next(
 			new AppError(
 				'The user belonging to this token does no longer exist.',
+				401,
+			),
+		);
+	}
+	if (!currentUser.emailVerified) {
+		const verifyToken = currentUser.createVerifyToken();
+		currentUser.save({ validateBeforeSave: false });
+		const url = `${req.protocol}://${req.get('host')}/verifyEmail/${verifyToken}`;
+
+		await new Email(currentUser, url).sendWelcome();
+
+		return next(
+			new AppError(
+				'Please verify your email! A verification email has been sended to your email!',
 				401,
 			),
 		);
@@ -227,6 +247,13 @@ exports.isLoggedIn = async (req, res, next) => {
 			}
 			if (!currentUser.photo) {
 				currentUser.photo = 'default.jpg';
+			}
+			if (!currentUser.emailVerified) {
+				res.cookie('jwt', 'loggedout', {
+					expires: new Date(Date.now() + 10 * 1000),
+					httpOnly: true,
+				});
+				return next();
 			}
 			res.locals.user = currentUser;
 			return next();
