@@ -2565,7 +2565,7 @@ const login = async (email, password)=>{
                 password
             }
         });
-        console.log(res.data.status);
+        // console.log(res.data.status);
         if (res.data.status === "success") {
             (0, _alerts.showAlert)("success", "Logged in successfully!");
             window.setTimeout(()=>{
