@@ -55,8 +55,32 @@ exports.getAccount = (req, res) => {
 			'Content-Security-Policy',
 			"default-src 'self' https://*.mapbox.com ;base-uri 'self';block-all-mixed-content;font-src 'self' https: data:;frame-ancestors 'self';connect-src https://cdnjs.cloudflare.com https://*.mapbox.com http://127.0.0.1:3000 'self';img-src 'self' data:;object-src 'none';script-src https://cdnjs.cloudflare.com https://api.mapbox.com 'self' blob: ;script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests;",
 		)
-		.render('account', {
-			title: 'Your account',
+		.render('forgetPassword', {
+			title: 'Forget your password?',
+		});
+};
+
+exports.getForgetPasswordForm = (req, res) => {
+	res
+		.status(200)
+		.set(
+			'Content-Security-Policy',
+			"default-src 'self' https://*.mapbox.com ;base-uri 'self';block-all-mixed-content;font-src 'self' https: data:;frame-ancestors 'self';connect-src https://cdnjs.cloudflare.com https://*.mapbox.com http://127.0.0.1:3000 'self';img-src 'self' data:;object-src 'none';script-src https://cdnjs.cloudflare.com https://api.mapbox.com 'self' blob: ;script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests;",
+		)
+		.render('forgetPassword', {
+			title: 'Forget Password',
+		});
+};
+
+exports.getResetPasswordForm = (req, res) => {
+	res
+		.status(200)
+		.set(
+			'Content-Security-Policy',
+			"default-src 'self' https://*.mapbox.com ;base-uri 'self';block-all-mixed-content;font-src 'self' https: data:;frame-ancestors 'self';connect-src https://cdnjs.cloudflare.com https://*.mapbox.com http://127.0.0.1:3000 'self';img-src 'self' data:;object-src 'none';script-src https://cdnjs.cloudflare.com https://api.mapbox.com 'self' blob: ;script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests;",
+		)
+		.render('resetPassword', {
+			title: 'Reset Password',
 		});
 };
 

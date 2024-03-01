@@ -15,6 +15,11 @@ viewRouter.get(
 	authController.isLoggedIn,
 	viewController.getLoginForm,
 );
+
+viewRouter.get('/forgetPassword', viewController.getForgetPasswordForm);
+
+viewRouter.get('/resetPassword/:token', viewController.getResetPasswordForm);
+
 viewRouter.get('/me', authController.protect, viewController.getAccount);
 viewRouter.post(
 	'/submit-user-data',

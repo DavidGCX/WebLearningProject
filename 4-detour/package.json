@@ -19,7 +19,7 @@
 		"deleteReview": "node ./dev-data/data/import-dev-data.js --deleteReview",
 		"updateRepo": "node ./dev-data/data/import-dev-data.js --updateRepo",
 		"deleteRepo": "node ./dev-data/data/import-dev-data.js --deleteRepo",
-		"watch:js": "parcel serve ./public/js/index.js --dist-dir ./public/js/bundled",
+		"watch:js": "parcel watch ./public/js/index.js --dist-dir ./public/js/bundled",
 		"build:js": "parcel build ./public/js/index.js --dist-dir ./public/js/bundled"
 	},
 	"author": "Chenxin Gao",
@@ -35,6 +35,7 @@
 		"express-rate-limit": "^7.1.5",
 		"helmet": "^7.1.0",
 		"hpp": "^0.2.3",
+		"html-to-text": "^9.0.5",
 		"jsonwebtoken": "^9.0.2",
 		"mongodb": "^6.3.0",
 		"mongoose": "^8.1.0",
